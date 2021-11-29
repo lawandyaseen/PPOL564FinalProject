@@ -476,6 +476,7 @@ finance
 finance = finance[["School Name", 'Total School Level Per Pupil Expenditures']]
 
 finance = finance.rename(columns = {"School Name": "SCHOOL_NAME"})
+finance = finance.rename(columns = {"Total School Level Per Pupil Expenditures": "SCHOOL_LEVEL_PER_PUPIL"})
 
 schools = finance.SCHOOL_NAME.isin(school_list)
 
