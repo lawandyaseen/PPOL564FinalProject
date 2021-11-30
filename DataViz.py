@@ -10,10 +10,12 @@ data = data.drop(columns = ["Unnamed: 0"])
 
 
 
-#sorting
-viz1 = data.sort_values(by = "ALL STUDENTS", ascending = False)
+#viz1 draft 
+viz1 = data
+ggplot(viz1, aes(x = "ALL STUDENTS", y ="ECONOMICALLY DISADVANTAGED", color = 'factor(SCHOOL_LEVEL_PER_PUPIL_QUARTILE)')) + geom_point()
 
-viz1
+
+
 
 ggplot(data, aes(x = "SCHOOL_LEVEL_PER_PUPIL_QUARTILE", y="ECONOMICALLY DISADVANTAGED"))+geom_point()
 
