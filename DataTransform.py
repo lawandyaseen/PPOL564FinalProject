@@ -305,6 +305,11 @@ filtered_schools_white = filtered_schools_white.drop_duplicates(subset=['SCHOOL_
 result = pd.merge(result,filtered_schools_white, on = "SCHOOL_NAME", how = "left")
 
 
+
+
+
+
+
 #double checking no duplicates or dropped schools
 len(result)
 
@@ -353,7 +358,6 @@ filtered_schools = filtered_schools.drop(columns = ["Category"])
 filtered_schools = filtered_schools.drop_duplicates(subset=['SCHOOL_NAME'])
 
 result = result.merge(filtered_schools, on = "SCHOOL_NAME")
-
 
 
 
@@ -494,6 +498,12 @@ for y in range(0,len(result)):
     for x in result.columns:
         if result[x].values[y] == "*":
             result[x].values[y] = 0
+
+#quartile creation for funding --- useful for tile plot and economic disad. analyses
+result['SCHOOL_LEVEL_PER_PUPIL_QUARTILE'] = pd.qcut(result['SCHOOL_LEVEL_PER_PUPIL'], q = 4, labels = ['0-25 %', '25-50 %', '50-75 %', '75-100 %'])
+result['SCHOOL_LEVEL_PER_PUPIL_QUARTILE'] = result['SCHOOL_LEVEL_PER_PUPIL_QUARTILE'].astype("category")
+quartile_dummy = pd.get_dummies(result['SCHOOL_LEVEL_PER_PUPIL_QUARTILE'])
+result = pd.concat([result,quartile_dummy], axis = 1)
 
 
 #final dataframe export
