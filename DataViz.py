@@ -10,37 +10,26 @@ data = data.drop(columns = ["Unnamed: 0"])
 
 
 
-#viz1 draft 
+#viz1 draft
 viz1 = data
-ggplot(viz1, aes(x = "ALL STUDENTS", y ="ECONOMICALLY DISADVANTAGED", color = 'factor(SCHOOL_LEVEL_PER_PUPIL_QUARTILE)')) + geom_point()
-
-
-
-
-ggplot(data, aes(x = "SCHOOL_LEVEL_PER_PUPIL_QUARTILE", y="ECONOMICALLY DISADVANTAGED"))+geom_point()
-
-ggplot(data, aes(x = "SCHOOL_LEVEL_PER_PUPIL", y="ECONOMICALLY DISADVANTAGED")) + geom_point()
-
-
-#animate all students and each student demographic maybe?
-data
-
-ggplot(data, aes(x = "ECONOMICALLY DISADVANTAGED", y=""))+geom_point()
-
+ggplot(viz1, aes(x = "ALL STUDENTS", y ="ECONOMICALLY DISADVANTAGED", color = 'factor(SCHOOL_LEVEL_PER_PUPIL_QUARTILE)')) + geom_point() + facet_wrap(["SCHOOL_LEVEL_PER_PUPIL_QUARTILE"])
+#facet wrap separates the four quartile plots
 
 #all students tile plot
 ggplot(data, aes(x = "SCHOOL_NAME", weight="ALL STUDENTS"))+geom_bar()
 
 #teacher experience level and economically disadvanteg students
-ggplot(data, aes(x= "TEACH_EXP", y= "SCHOOL_LEVEL_PER_PUPIL")) + geom_point()
+ggplot(data, aes(x= "TEACH_EXP", y= "BLACK")) + geom_point()
 
-
-
-
+data.describe() #exploring the teach experience values
 
 #spending per school tile plot using quartiles
 viz3 = data.sort_values(by = "ECONOMICALLY DISADVANTAGED", ascending = False)
 viz3 = viz3[:50]
-plot = (ggplot(viz3, aes(x = "SCHOOL_NAME", y = "SCHOOL_LEVEL_PER_PUPIL_QUARTILE")) + geom_tile() + guides(fill = False))
+plot = (ggplot(viz3, aes(x = "SCHOOL_NAME", y = "SCHOOL_LEVEL_PER_PUPIL_QUARTILE")) + geom_tile() + guides(fill = False) + theme(axis_text_x = element_text(angle = 90, hjust = 1)))
 
 plot
+
+
+
+#could be useful to exclude elementary schools... if analysis doesn't lose signficant power by dropping those values 
