@@ -35,7 +35,7 @@ data = pd.read_csv("/Users/lawandyaseen/Desktop/PPOL564FinalProject/Suspension_T
 data = data.drop(columns = ["Unnamed: 0"])
 np.random.seed(1234)
 
-len(train) #1321 schools used in training data
+ #1321 schools used in training data
 
 #using SKLEARN framework
 
@@ -51,13 +51,7 @@ train_X, test_X, train_Y, test_Y = train_test_split(X,Y,test_size=.2,random_stat
 
 train_X
 
-(
-    ggplot(train_X.melt(),aes(x="value")) +
-    geom_histogram() +
-    facet_wrap("variable",scales="free") +
-    theme_minimal() +
-    theme(figure_size = (10,3))
-)
+
 
 #scale of spending --- thousands, other categories are between 0-100
 
@@ -116,15 +110,31 @@ search.best_params_
 #need to tune the parameter
 
 
+#pulling model scores for comparison
+lm_scores = cross_validate(LM(),train_X,train_Y, cv = fold_generator, scoring =use_metrics)
+knn_scores = cross_validate(KNN(),train_X,train_Y, cv = fold_generator, scoring =use_metrics)
+dt_scores = cross_validate(DTree(),train_X,train_Y, cv = fold_generator, scoring =use_metrics)
+bag_scores = cross_validate(Bag(),train_X,train_Y, cv = fold_generator, scoring =use_metrics)
+rf_scores = cross_validate(RF(),train_X,train_Y, cv = fold_generator, scoring =use_metrics)
 
+# Collect all the metrics we care about as a dictionary
+collect_scores = \
+dict(lm = lm_scores['test_neg_mean_squared_error']*-1,
+     knn = knn_scores['test_neg_mean_squared_error']*-1,
+     dt = dt_scores['test_neg_mean_squared_error']*-1,
+     bag = bag_scores['test_neg_mean_squared_error']*-1,
+     rf = rf_scores['test_neg_mean_squared_error']*-1)
 
+# Convert to a data frame and reshape
+collect_scores = pd.DataFrame(collect_scores).melt(var_name="Model",value_name="MSE")
+collect_scores.head()
 
 
 #predict will use best model
 pred_Y = search.predict(test_X)
 
 
-#visualizing the prediction with best model 
+#visualizing the prediction with best model
 (
     ggplot(pd.DataFrame(dict(pred=pred_Y,truth=test_Y)),
           aes(x='pred',y="truth")) +
