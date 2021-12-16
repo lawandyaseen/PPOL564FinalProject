@@ -1,5 +1,8 @@
 #Machine Learning
+#used ML pipeline that was used in class
 
+
+#packages used
 import pandas as pd
 import numpy as np
 import missingno as miss
@@ -27,52 +30,64 @@ import sklearn.metrics as m
 
 from sklearn.pipeline import Pipeline
 
+import sklearn.metrics as m
+
+from sklearn.pipeline import Pipeline
+
+from sklearn.inspection import (
+    permutation_importance,
+    partial_dependence,
+    PartialDependenceDisplay,
+    plot_partial_dependence
+)
+import warnings
+warnings.filterwarnings("ignore")
 
 
 
 
-data = pd.read_csv("/Users/lawandyaseen/Desktop/PPOL564FinalProject/Suspension_TeachExp_Finance.csv")
+#loading in cleaned data
+data = pd.read_csv("/Users/lawandyaseen/Desktop/PPOL564FinalProject/Cleaned Data/project_data.csv")
+#dropping index column from export
 data = data.drop(columns = ["Unnamed: 0"])
+#setting sed
 np.random.seed(1234)
 
- #1321 schools used in training data
+len(data)#819 schools used in training data
+
 
 #using SKLEARN framework
 
 #separating outcome and predictors
 #outcome -- all students
-Y = data['ALL STUDENTS']
+Y = data['IN_SCHOOL_SUSPENSION_RATE']
 #predictors of interest
-X = data[['BLACK', 'ECONOMICALLY DISADVANTAGED', 'MALE', 'BHNA', 'TEACH_EXP', 'TEACH_EMERG', 'TEACH_OUT_OF_FIELD', 'SCHOOL_LEVEL_PER_PUPIL']]
-#economically disadvantaged, black, white, per pupil spending, teacher experience, teacher emergency, teacher out of field
+X = data[['FEMALE', 'MALE', 'NATIVE', 'ASIAN', 'BLACK', 'HISPANIC', 'MULTIPLE', 'AAPI', 'WHITE', 'TEACH_INEXP', 'SCHOOL_LEVEL_PER_PUPIL']]
 
 #split data into training and test
 train_X, test_X, train_Y, test_Y = train_test_split(X,Y,test_size=.2,random_state=1234)
 
 train_X
 
-
-
-#scale of spending --- thousands, other categories are between 0-100
-
-
+len(train_X)
 
 #Using SKLEARN from class
 
+#cross validator - using MSE as the measure of effectivness
 fold_generator = KFold(n_splits=5, shuffle=True,random_state=111)
 use_metrics = ["neg_mean_squared_error"]
 
-# (2) Next specify the preprocessing steps
-preprocess = ColumnTransformer(transformers=[('num', pp.MinMaxScaler(), ['BLACK', 'ECONOMICALLY DISADVANTAGED', 'MALE', 'BHNA', 'TEACH_EXP', 'TEACH_EMERG', 'TEACH_OUT_OF_FIELD', 'SCHOOL_LEVEL_PER_PUPIL'])])
+#preprocessing data
+preprocess = ColumnTransformer(transformers=[('num', pp.MinMaxScaler(), ['FEMALE', 'MALE', 'NATIVE', 'ASIAN', 'BLACK', 'HISPANIC', 'MULTIPLE', 'AAPI', 'WHITE', 'TEACH_INEXP', 'SCHOOL_LEVEL_PER_PUPIL'])])
 
 
-# (3) Next Let's create our model pipe (note for the model we leave none as a placeholder)
+#creating pipeline
 pipe = Pipeline(steps=[('pre_process', preprocess),
                        ('model',None)])
 
 
-# (4) Specify the models and their repsective tuning parameters.
-# Note the naming convention here to reference the model key
+#model ID
+
 search_space = [
     # Linear Model
     {'model' : [LM()]},
@@ -94,30 +109,30 @@ search_space = [
      'model__n_estimators':[500,1000,1250]},
 ]
 
-# (5) Put it all together in the grid search
+# Creating a grid search
 search = GridSearchCV(pipe, search_space,
                       cv = fold_generator,
                       scoring='neg_mean_squared_error',
                       n_jobs=4)
-# (6) Fit the model to the training data
+
+# plugging in training data
 search.fit(train_X,train_Y)
 
+#reports back the lowest MSE
+search.best_score_
 
-search.best_score_ # Mean out-of-sample (CV) error
-
-
+#reports the best algorithm and the best parameters
 search.best_params_
-#need to tune the parameter
 
 
-#pulling model scores for comparison
+#pulling scores for comparing
 lm_scores = cross_validate(LM(),train_X,train_Y, cv = fold_generator, scoring =use_metrics)
 knn_scores = cross_validate(KNN(),train_X,train_Y, cv = fold_generator, scoring =use_metrics)
 dt_scores = cross_validate(DTree(),train_X,train_Y, cv = fold_generator, scoring =use_metrics)
 bag_scores = cross_validate(Bag(),train_X,train_Y, cv = fold_generator, scoring =use_metrics)
 rf_scores = cross_validate(RF(),train_X,train_Y, cv = fold_generator, scoring =use_metrics)
 
-# Collect all the metrics we care about as a dictionary
+#adding above scores into a dictionary
 collect_scores = \
 dict(lm = lm_scores['test_neg_mean_squared_error']*-1,
      knn = knn_scores['test_neg_mean_squared_error']*-1,
@@ -125,21 +140,56 @@ dict(lm = lm_scores['test_neg_mean_squared_error']*-1,
      bag = bag_scores['test_neg_mean_squared_error']*-1,
      rf = rf_scores['test_neg_mean_squared_error']*-1)
 
-# Convert to a data frame and reshape
+# converting dictionary into dataframe
 collect_scores = pd.DataFrame(collect_scores).melt(var_name="Model",value_name="MSE")
 collect_scores.head()
-
 
 #predict will use best model
 pred_Y = search.predict(test_X)
 
 
-#visualizing the prediction with best model
-(
-    ggplot(pd.DataFrame(dict(pred=pred_Y,truth=test_Y)),
-          aes(x='pred',y="truth")) +
-    geom_point(alpha=.75) +
-    geom_abline(linetype="dashed",color="darkred",size=1) +
-    theme_bw() +
+#visualizing the predicted values using the best model
+viz4 = (
+    ggplot(pd.DataFrame(dict(Predicted=pred_Y,Observed=test_Y)),
+          aes(x='Predicted',y='Observed')) +
+    geom_point() + labs(title = "Comparison of Accuracy") +
+    geom_abline(linetype="dashed",color="green",size=1) + theme_538() +
     theme(figure_size=(10,7))
 )
+
+#saving this graphic
+viz4.save(filename = "viz4.png", dpi = 100)
+
+rf_mod = search.best_estimator_
+
+#permutation importance with 25 iterations
+vi = permutation_importance(rf_mod,test_X,test_Y,n_repeats=25)
+
+# Organizing as a dataframe
+vi_dat = pd.DataFrame(dict(variable=train_X.columns,
+                           vi = vi['importances_mean'],
+                           std = vi['importances_std']))
+
+# Generate intervals
+vi_dat['low'] = vi_dat['vi'] - 2*vi_dat['std']
+vi_dat['high'] = vi_dat['vi'] + 2*vi_dat['std']
+
+#ascending order
+vi_dat = vi_dat.sort_values(by="vi",ascending=False).reset_index(drop=True)
+
+
+#visualizing rank of importance
+viz5 = (
+    ggplot(vi_dat,
+          aes(x="variable",y="vi")) +
+    geom_col(alpha=.5) +
+    geom_point() +
+    geom_errorbar(aes(ymin="low",ymax="high"),width=.2) +
+    theme_bw() +
+    scale_x_discrete(limits=vi_dat.variable.tolist()) +
+    coord_flip() +
+    labs(y="Reduction in AUC ROC",x="", title = "Comparison of Variable Impact on Model Accuracy")
+)
+
+#saving this graphic
+viz5.save(filename = "viz5.png", dpi = 100)

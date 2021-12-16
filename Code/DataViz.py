@@ -8,10 +8,21 @@ style.available
 style.use('fivethirtyeight')
 
 #importing cleaned data
-data = pd.read_csv("/Users/lawandyaseen/Desktop/PPOL564FinalProject/Suspension_TeachExp_Finance.csv")
+data = pd.read_csv("/Users/lawandyaseen/Desktop/PPOL564FinalProject/project_data.csv")
 #dropping index column lol
 data = data.drop(columns = ["Unnamed: 0"])
 
+
+gender = pd.melt(data, id_vars = ['SCHOOL_NAME'], value_vars = ['FEMALE', 'MALE'])
+
+race = pd.melt(data, id_vars = ['SCHOOL_NAME'], value_vars = ['NATIVE', 'ASIAN', 'BLACK', 'HISPANIC', 'AAPI', 'WHITE'])
+
+
+ggplot(data, aes(x = "BLACK", y = "IN_SCHOOL_SUSPENSION_RATE")) + geom_point()
+
+ggplot(data, aes(x = "WHITE", y = "IN_SCHOOL_SUSPENSION_RATE")) + geom_point()
+
+SCHOOL_NAME	IN_SCHOOL_SUSPENSION_RATE	ALL STUDENTS	FEMALE	MALE	NATIVE	ASIAN	BLACK	HISPANIC	MULTIPLE	AAPI	WHITE	TEACH_INEXP	SCHOOL_LEVEL_PER_PUPIL
 
 
 #viz1 draft
@@ -61,3 +72,31 @@ plot
 
 
 #could be useful to exclude elementary schools... if analysis doesn't lose signficant power by dropping those values
+
+
+#plots for final report
+
+#suspension rates as a function of black, white, hispanic, asian
+ggplot(gender, aes(x = "factor(variable)", y = "value")) + geom_point()
+
+#racial density
+ggplot(race, aes(x = "factor(variable)", y = "value")) + geom_point()
+#suspension rates as a function of teacher experience
+
+ggplot(data, aes(x = "TEACH_INEXP", y = "IN_SCHOOL_SUSPENSION_RATE")) + geom_point()
+
+#teacher inexperience does not seem to have an efffect on suspension rates
+
+
+
+
+
+#tile plot - how do i want to break it down
+sorted = data.sort_values(by = ["IN_SCHOOL_SUSPENSION_RATE"], ascending = False)
+sorted['SCHOOL_LEVEL_PER_PUPIL_QUARTILE'] = pd.qcut(sorted['SCHOOL_LEVEL_PER_PUPIL'], q = 4, labels = ['0-25 %', '25-50 %', '50-75 %', '75-100 %'])
+sorted['SCHOOL_LEVEL_PER_PUPIL_QUARTILE'] = sorted['SCHOOL_LEVEL_PER_PUPIL_QUARTILE'].astype("category")
+quartile_dummy = pd.get_dummies(sorted['SCHOOL_LEVEL_PER_PUPIL_QUARTILE'])
+sorted = pd.concat([sorted,quartile_dummy], axis = 1)
+top25 = sorted[:25]
+
+(ggplot(top25, aes(x = "SCHOOL_NAME", y = "SCHOOL_LEVEL_PER_PUPIL_QUARTILE")) + geom_tile() + guides(fill = False) + theme(axis_text_x = element_text(angle = 90, hjust = 1)))

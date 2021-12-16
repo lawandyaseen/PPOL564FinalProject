@@ -8,7 +8,7 @@ import pandas as pd
 
 #discipline data at school level
 discipline = pd.read_excel("/Users/lawandyaseen/Desktop/PPOL564 Final Project/Raw Data/discipline_201819.xlsx")
-
+data = pd.read_csv("/Users/lawandyaseen/Desktop/PPOL564FinalProject/project_data.csv")
 
 #dropping unwanted columns
 discipline = discipline.drop(columns = ["SCHOOL_YEAR", "DISTRICT_NO", "STUDENT_CNT", "DISTRICT_NAME", "SCHOOL_NO", "EXPULSION_RATE","OUT_OF_SCHOOL_SUSPENSION_RATE"])
